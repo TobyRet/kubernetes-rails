@@ -1,18 +1,15 @@
-FROM ruby:2.5
-RUN apt-get update && apt-get install -qq -y build-essential nodejs yarn libpq-dev --fix-missing --no-install-recommends
-ENV INSTALL_PATH /app
-RUN mkdir -p $INSTALL_PATH
+FROM ruby:2.5.1
+RUN apt-get update -qq && apt-get install -y build-essential libpq-dev nodejs netcat-openbsd
+RUN mkdir /myapp
 
-WORKDIR $INSTALL_PATH
+WORKDIR /myapp
 
-ENV RAILS_ENV production
-ENV RAILS_SERVE_STATIC_FILES true
-ENV RAILS_LOG_TO_STDOUT true
+COPY Gemfile /myapp/Gemfile
+COPY Gemfile.lock /myapp/Gemfile.lock
 
-COPY Gemfile Gemfile
-COPY Gemfile.lock Gemfile.lock
+RUN bundle install 
 
-COPY . .
-RUN bundle install --deployment
+COPY . /myapp
+COPY docker-entrypoint.sh /usr/local/bin
 
-RUN bundle exec rake DATABASE_URL=postgresql:does_not_exist assets:precompile
+ENTRYPOINT ["docker-entrypoint.sh"]
