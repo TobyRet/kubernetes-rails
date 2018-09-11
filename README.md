@@ -1,24 +1,13 @@
 # README
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+### Run Docker Compose
 
-Things you may want to cover:
+The docker compose configuration spins up Postgres and the Rails application.
+Migrations are run only when the postgres container is ready (see
+docker-entry.sh)
 
-* Ruby version
+```
+$ docker-compose build
+$ docker-compose run
+```
 
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
