@@ -9,6 +9,12 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 2
+  minReadySeconds: 10
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 2
+      maxSurge: 1
   selector:
     matchLabels:
       app: {{ template "kubernetes-demo-app.name" . }}
@@ -19,6 +25,10 @@ spec:
         app: {{ template "kubernetes-demo-app.name" . }}
         release: {{ .Release.Name }}
     spec:
+      volumes:
+      - name: rails-persistent-storage
+        persistentVolumeClaim:
+          claimName: postgres-pv-claim
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
