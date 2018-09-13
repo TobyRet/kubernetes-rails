@@ -1,0 +1,75 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "kubernetes-demo-app.fullname" . }}
+  labels:
+    app: {{ template "kubernetes-demo-app.name" . }}
+    chart: {{ template "kubernetes-demo-app.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "kubernetes-demo-app.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "kubernetes-demo-app.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          args: ["rake assets:precompile && rails s -b 0.0.0.0"]
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+          env:
+            - name: SERVER_IP
+              valueFrom: 
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: RAILS_LOG_TO_STDOUT
+              value: "true"
+            - name: RAILS_ENV
+              value: "production"
+            - name: SERVER_NAME
+              value: {{ required "URL is required" .Values.deploy.host | quote }}
+            - name: RAILS_SERVE_STATIC_FILES
+              value: "true"
+            - name: POSTGRES_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name:  {{ template "kubernetes-demo-app.fullname" . }}
+                  key: postgresDatabase
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name:  {{ template "kubernetes-demo-app.fullname" . }}
+                  key: postgresUser
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kubernetes-demo-app.fullname" . }}
+                  key: secretKey
+            - name: POSTGRES_HOST
+              value: {{ printf "%s-%s" .Release.Name "postgresql" | trunc 63 | trimSuffix "=" }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "kubernetes-demo-app.fullname" . }}
+                  key: postgresPassword

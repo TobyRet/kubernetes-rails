@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: setup
+spec:
+  template:
+    metadata:
+      name: setup
+    spec:
+      containers:
+      - name: setup
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args: ["rails db:create && rails db:migrate"]
+        env:
+          - name: SERVER_IP
+            valueFrom: 
+              fieldRef:
+                fieldPath: status.podIP
+          - name: RAILS_LOG_TO_STDOUT
+            value: "true"
+          - name: RAILS_ENV
+            value: "production"
+          - name: SERVER_NAME
+            value: {{ required "URL is required" .Values.deploy.host | quote }}
+          - name: RAILS_SERVE_STATIC_FILES
+            value: "true"
+          - name: POSTGRES_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name:  {{ template "kubernetes-demo-app.fullname" . }}
+                key: postgresDatabase
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name:  {{ template "kubernetes-demo-app.fullname" . }}
+                key: postgresUser
+          - name: SECRET_KEY_BASE
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "kubernetes-demo-app.fullname" . }}
+                key: secretKey
+          - name: POSTGRES_HOST
+            value: {{ printf "%s-%s" .Release.Name "postgresql" | trunc 63 | trimSuffix "=" }}
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "kubernetes-demo-app.fullname" . }}
+                key: postgresPassword
+      restartPolicy: Never
