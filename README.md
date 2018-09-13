@@ -11,3 +11,15 @@ $ docker-compose build
 $ docker-compose run
 ```
 
+### Run Helm Deployment
+
+```
+$ cd helm-deploy/kubernetes-demo-app
+$ helm install . \
+--name [APP_NAME] \
+--namespace [NAME_SPACE] \
+--set deploy.host=[DEPLOY_HOST] \
+--tiller-namespace [TILLER_NAMESPACE]
+
+```
+
